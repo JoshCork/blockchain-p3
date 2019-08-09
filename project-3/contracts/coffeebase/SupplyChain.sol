@@ -389,7 +389,7 @@ contract SupplyChain {
   itemState = items[_upc].itemState;
   distributorID = items[_upc].distributorID;
   retailerID = items[_upc].retailerID;
-  consumerID = items[_upc].consumerID    ;
+  consumerID = items[_upc].consumerID;
   return 
   (
   itemSKU,
