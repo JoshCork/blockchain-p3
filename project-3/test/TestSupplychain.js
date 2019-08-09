@@ -16,7 +16,7 @@ contract('SupplyChain', function(accounts) {
     const originFarmLongitude = "144.341490"
     var productID = sku + upc
     const productNotes = "Best beans for Espresso"
-    const productPrice = web3.utils.toWei('100', 'ether')
+    const productPrice = web3.utils.toWei('1', 'ether')
     var itemState = 0
     const distributorID = accounts[2]
     const retailerID = accounts[3]
@@ -173,14 +173,37 @@ contract('SupplyChain', function(accounts) {
     // 5th Test
     it("Testing smart contract function buyItem() that allows a distributor to buy coffee", async() => {
         // Declare and Initialize a variables
+
         const supplyChain = await SupplyChain.deployed();
-        const accountId = 2; // which actor are we simulating?
-        const wholesalePrice = 100; // price of the item that the distributor buys at.
+        const accountID = 2; // which actor are we simulating?
+
+        // snapshots of actors account balance
+        let startFarmerBalance = await web3.eth.getBalance(accounts[accountID-1])
+        let startDistributorBalance = await web3.eth.getBalance(accounts[accountID])
+
+        // declare and iniatialize other variables
+        const wholesalePrice = productPrice; // price of the item that the distributor buys at.
+        const msgValue = productPrice; // value of the message you want to send TODO: write another test case that tests that change has beeen delivered correctly.
         const markupFactor = 4; // distributor's markup multiplier.  used to calculate manufacturer suggested retail price (msrp or msrPrice)
         const msrPrice = wholesalePrice * markupFactor; // manufacturer suggested retail price (the price that the retailer will sell at).
         const expectedState = 4; // which state are we expecting after this test executes
         const expectedStateName = 'Sold'; // what is the state name we are expecting after this test executes
-        let result = await supplyChain.buyItem(upc, {from: accounts[accountId]}); // make the call, and als making up for watch() no longer being available
+
+        // make the call
+        let result = await supplyChain.buyItem(upc, {from: accounts[accountID], value: msgValue}); // make the call, and als making up for watch() no longer being available
+
+        // snapshot of post call balances
+        let endFarmerBalance = await web3.eth.getBalance(accounts[accountID-1])
+        let endDistributorBalance = await web3.eth.getBalance(accounts[accountID])
+
+        // calculate deltas and convert back to ether
+        let farmDelta = endFarmerBalance - startFarmerBalance;
+        let distributorDelta = endDistributorBalance - startDistributorBalance
+        let farmDeltaEth = web3.utils.fromWei(farmDelta.toString(), 'ether');
+        let distributorDeltaEth = web3.utils.fromWei(distributorDelta.toString(), 'ether');
+
+        console.log(`farmDeltaEth: ${farmDeltaEth}`);
+        console.log(`distributorDeltaEth: ${distributorDeltaEth}`);
 
          // Grab the emitted event (expected to be Processed())
          let expectedEvent = result.logs[0].event;
@@ -192,7 +215,7 @@ contract('SupplyChain', function(accounts) {
         // Verify the result set
         assert.equal(resultBufferOne[0], sku, 'Error: Invalid item SKU')
         assert.equal(resultBufferOne[1], upc, 'Error: Invalid item UPC')
-        assert.equal(resultBufferOne[2], distributorId, 'Error: Missing or Invalid ownerID')
+        assert.equal(resultBufferOne[2], distributorID, 'Error: Missing or Invalid ownerID')
         assert.equal(resultBufferOne[3], originFarmerID, 'Error: Missing or Invalid originFarmerID')
         assert.equal(resultBufferOne[4], originFarmName, 'Error: Missing or Invalid originFarmName')
         assert.equal(resultBufferOne[5], originFarmInformation, 'Error: Missing or Invalid originFarmInformation')
@@ -200,8 +223,10 @@ contract('SupplyChain', function(accounts) {
         assert.equal(resultBufferOne[7], originFarmLongitude, 'Error: Missing or Invalid originFarmLongitude')
         assert.equal(resultBufferTwo[5], expectedState, `Error: Invalid item State`)
         assert.equal(resultBufferTwo[4], msrPrice, `Error: Invalid item price`)
-        assert.equal(resultBufferTwo[6], distributorId, `Error: Invalid item price`)
+        assert.equal(resultBufferTwo[6], distributorID, `Error: Invalid item price`)
         assert.equal(expectedEvent,expectedStateName,'Error: Invalid event emitted')
+        assert.equal(farmDelta,wholesalePrice,'Error: Farmer got the wrong amont of Wei')
+
 
     })
 
