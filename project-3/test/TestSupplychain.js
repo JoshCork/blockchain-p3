@@ -202,8 +202,17 @@ contract('SupplyChain', function(accounts) {
         let farmDeltaEth = web3.utils.fromWei(farmDelta.toString(), 'ether');
         let distributorDeltaEth = web3.utils.fromWei(distributorDelta.toString(), 'ether');
 
-        console.log(`farmDeltaEth: ${farmDeltaEth}`);
-        console.log(`distributorDeltaEth: ${distributorDeltaEth}`);
+        // console.log(result);
+        // console.log(tx);
+
+        let calculatedBalance = startDistributorBalance - result.receipt.cumulativeGasUsed - msgValue;
+
+        console.log(`startDistributorBalance: ${startDistributorBalance}`);
+        console.log(`Total Gas Used: ${result.receipt.cumulativeGasUsed}`);
+        console.log(`Product Price: ${msgValue}`)
+        console.log(`Calculated Balance: ${calculatedBalance}`);
+        console.log(`Actual Balance: ${endDistributorBalance}`);
+        console.log(`I am off by: ${endDistributorBalance - calculatedBalance}`)
 
          // Grab the emitted event (expected to be Processed())
          let expectedEvent = result.logs[0].event;
