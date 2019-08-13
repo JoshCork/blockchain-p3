@@ -75,8 +75,8 @@ contract SupplyChain {
   }
 
   // Define a modifier that checks if the paid amount is sufficient to cover the price
-  modifier paidEnough(uint _price) {
-    require(msg.value >= _price);
+  modifier paidEnough(uint price) {
+    require(msg.value >= price);
     _;
   }
 
@@ -92,7 +92,7 @@ contract SupplyChain {
     _;
     uint _price = items[_upc].productPrice;
     uint amountToReturn = msg.value - _price;
-    items[_upc].consumerID.transfer(amountToReturn);
+    msg.sender.transfer(amountToReturn);
   }
 
   // Define a modifier that checks if an item.state of a upc is Harvested
@@ -309,9 +309,10 @@ contract SupplyChain {
     // Call modifier to check if upc has passed previous supply chain stage
     received(_upc)
     // Call modifer to check if buyer has paid enough
-    paidEnough(msg.value)
+    paidEnough(items[_upc].productPrice)
     // Call modifer to send any excess ether back to buyer
-    checkValue(msg.value)
+    //TODO: FIX THIS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    checkValue(_upc)
 
     // Access Control List enforced by calling Smart Contract / DApp
     {
@@ -319,12 +320,16 @@ contract SupplyChain {
     items[_upc].ownerID = msg.sender;
     items[_upc].consumerID = msg.sender;
     items[_upc].itemState = State.Purchased;
+    // address newAddress = 0x460c31107dd048e34971e57da2f99f659add4f02;
+    uint _revenueSplit = items[_upc].productPrice;
 
-    // transfer the money to the distributor and retailer
-    // TODO: remember how to multiply times decimals.  Using integers here because
-    // I don't remember and this is an unrealistic markup and profit split.
-    items[_upc].distributorID.transfer(items[_upc].productPrice / 2);
-    items[_upc].retailerID.transfer(items[_upc].productPrice / 2);
+
+    // // transfer the money to the distributor and retailer
+    // // TODO: remember how to multiply times decimals.  Using integers here because
+    // // I don't remember and this is an unrealistic markup and profit split.
+    items[_upc].retailerID.transfer(msg.value / 2);
+    items[_upc].distributorID.transfer(msg.value / 2);
+    // newAddress.transfer(msg.value);
 
     // Emit the appropriate event
     emit Purchased(_upc);
