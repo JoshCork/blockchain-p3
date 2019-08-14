@@ -162,6 +162,7 @@ contract SupplyChain {
   // Define a function 'harvestItem' that allows a farmer to mark an item 'Harvested'
   function harvestItem(
                         uint _upc,
+                        uint _productID,
                         address _originFarmerID,
                         string _originFarmName,
                         string _originFarmInformation,
@@ -173,6 +174,7 @@ contract SupplyChain {
     Item memory harvestedItem;
     harvestedItem.upc = _upc;
     harvestedItem.sku = sku;
+    harvestedItem.productID = _productID;
     harvestedItem.ownerID = _originFarmerID;
     harvestedItem.originFarmerID = _originFarmerID;
     harvestedItem.originFarmName = _originFarmName;
@@ -311,7 +313,6 @@ contract SupplyChain {
     // Call modifer to check if buyer has paid enough
     paidEnough(items[_upc].productPrice)
     // Call modifer to send any excess ether back to buyer
-    //TODO: FIX THIS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     checkValue(_upc)
 
     // Access Control List enforced by calling Smart Contract / DApp
@@ -320,8 +321,6 @@ contract SupplyChain {
     items[_upc].ownerID = msg.sender;
     items[_upc].consumerID = msg.sender;
     items[_upc].itemState = State.Purchased;
-    // address newAddress = 0x460c31107dd048e34971e57da2f99f659add4f02;
-    uint _revenueSplit = items[_upc].productPrice;
 
 
     // // transfer the money to the distributor and retailer
