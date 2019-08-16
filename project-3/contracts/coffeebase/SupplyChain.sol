@@ -84,7 +84,7 @@ contract SupplyChain {
     _;
     uint _price = items[_upc].productPrice;
     uint amountToReturn = msg.value - _price;
-    msg.sender.transfer(amountToReturn);
+    // msg.sender.transfer(amountToReturn);
   }
 
   // Define a modifier that checks the price and refunds the remaining balance
@@ -248,7 +248,7 @@ contract SupplyChain {
     // Call modifer to check if buyer has paid enough
     paidEnough(items[_upc].productPrice)
     // Call modifer to send any excess ether back to buyer
-    // returnChange(_upc)
+    returnChange(_upc)
     {
 
     // Update the appropriate fields - ownerID, distributorID, itemState
