@@ -1,8 +1,21 @@
 # PROJECT 3
 
-This repo contains the work associated with project 3. The site can be built using `npm run dev` and is pointed at my contract hosted on Rinkeby. The site can be pulled up using `http://localhost:3000/`.
+This repo contains the work associated with project 3. All the code, contracts, and truffle migration stuff is in the project-3 folder.
 
-You can find the Migration results including the contract address below.
+### Running the project locally
+
+1. Navigate into the project-3 folder
+1. Install dependencies by navigating by running `npm install`
+1. Run the command `npm run dev`
+1. The site will be pulled up using `http://localhost:3000/`
+
+### Using Truffle to test/migrate
+
+You'll need to create a `.secret` file with your own Mnemonic to connect it locally to Gnache or deploy a copy of it using your own Rinkeby account.
+
+## General Information
+
+You can find the Rinkeby Migration results including the contract address below.
 
 As far as the contract itself goes I've modified the base template to make the supply chain a bit more realistic. Specifically:
 
