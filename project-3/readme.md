@@ -1,5 +1,39 @@
 # PROJECT 3
 
+This repo contains the work associated with project 3. The site can be built using `npm run dev` and is pointed at my contract hosted on Rinkeby. The site can be pulled up using `http://localhost:3000/`.
+
+You can find the Migration results including the contract address below.
+
+As far as the contract itself goes I've modified the base template to make the supply chain a bit more realistic. Specifically:
+
+1. In this contract, once a distributor purchases the crop from the farmer he marks up the price to the "manufacturing suggested retail price".
+1. The goods are then consigned to a retailer (while still being owned by the distributor) and once the retailer has confirmed that the product has been received it can be sold.
+1. Once the consumer purchases the goods from the retailer the contract will automatically split the revenue 50/50 with the distributor and retailer.
+
+## Testing
+
+I added some additional tests to ensure that when a farmer was paid his total ether increated by the amount expected. Same for the Retailer/Distributor. All tests are passing and can be run by firing up the Gnache GUI (or alternately switching the config to use the CLI Ganache port) and running `truffle test`
+
+## UML
+
+All the UML from the exercises that I did for my business as well as the pre-project UML for the coffee shop can be found in the project-3/uml folder.
+
+## Libraries
+
+I didn't pull in any additional libraries for use in the project. In the development of the project, I did have to add the following two libraries to make my migrations with truffle work. This was the same as was instructed in the last project in the student forums. Specifically, I had to add:
+
+* `"any-promise": "^1.3.0"`
+
+* `"truffle-hdwallet-provider": "^1.0.0-web3one.5"`
+
+## IPFS
+
+I didn't use IPFS in this project as in my extensive work with IPFS during the coursework it seemed slow and unresponsive. I pointed my domain (joshuacork.com) at a template site hosted by IPFS with just the bare-bones minimum css, HTML, and javascript required to run the site and it still won't load.
+
+## Product Images
+
+I did not implement the two optional methods to store the product image in this submission.
+
 
 ## Migration Results - SupplyChain Contract
 
