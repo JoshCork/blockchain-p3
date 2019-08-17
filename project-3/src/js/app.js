@@ -301,9 +301,11 @@ App = {
         App.readForm(); // Take any changes that were made.
 
         App.contracts.SupplyChain.deployed().then(function (instance) {
-            return instance.purchaseItem(App.upc, {
-                from: App.metamaskAccountID
-            });
+            const walletValue = web3.toWei(5.1, "ether");
+            console.log(walletValue);
+            console.log(`MetamaskID: ${App.metamaskAccountID}`);
+            console.log(`App UPC: ${App.upc}`)
+            return instance.purchaseItem(App.upc,{value: walletValue});
         }).then(function (result) {
             $("#ftc-item").text(result);
             console.log('purchaseItem', result);
@@ -337,6 +339,15 @@ App = {
             return instance.fetchItemBufferOne(App.upc);
         }).then(function (result) {
 
+            console.log(`sku: ${result[0]}`);
+            console.log(`upc: ${result[1]}`);
+            console.log(`ownerID: ${result[2]}`);
+            console.log(`originFarmerID: ${result[3]}`);
+            console.log(`originFarmName: ${result[4]}`);
+            console.log(`originFarmInformation: ${result[5]}`);
+            console.log(`originFarmLatitude: ${result[6]}`);
+            console.log(`originFarmLongitud: ${result[7]}`);
+
             $("#sku").val(result[0]);
             $("#upc").val(result[1]);
             $("#ownerID").val(result[2]);
@@ -361,6 +372,12 @@ App = {
             return instance.fetchItemBufferTwo.call(App.upc);
         }).then(function (result) {
             $("#ftc-item").text(result);
+
+            console.log(`itemState: ${result[5]}`);
+            console.log(`productPrice:  ${result[4]}`);
+            console.log(`distributorID:  ${result[6]}`);
+            console.log(`retailerID:  ${result[7]}`);
+            console.log(`consumerID:  ${result[8]}`);
 
             $("#productNotes").val(result[3]);
             $("#productPrice").val(web3.fromWei(result[4], "ether"));
