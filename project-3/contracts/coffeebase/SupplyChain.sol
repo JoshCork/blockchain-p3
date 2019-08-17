@@ -1,4 +1,5 @@
 pragma solidity ^0.4.24;
+
 // Define a contract 'Supplychain'
 contract SupplyChain {
 
@@ -64,35 +65,29 @@ contract SupplyChain {
 
   // Define a modifer that checks to see if msg.sender == owner of the contract
   modifier onlyOwner() {
-    require(msg.sender == owner);
+    require(msg.sender == owner,"not the owner");
     _;
   }
 
   // Define a modifer that verifies the Caller
   modifier verifyCaller (address _address) {
-    require(msg.sender == _address);
+    require(msg.sender == _address, "Cannot verify caller");
     _;
   }
 
   // Define a modifier that checks if the paid amount is sufficient to cover the price
-  modifier paidEnough(uint price) {
-    require(msg.value >= price);
-    _;
-  }
-
-  modifier returnChange(uint _upc) {
-    _;
+  modifier paidEnough(uint _upc) {
     uint _price = items[_upc].productPrice;
-    uint amountToReturn = msg.value - _price;
-    // msg.sender.transfer(amountToReturn);
-  }
-
-  // Define a modifier that checks the price and refunds the remaining balance
-  modifier checkValue(uint _upc) {
+    require(msg.value >= _price,"have not paid enough ");
     _;
+  }
+  // Define a modifier that checks the price and refunds the remaining balance
+  modifier returnChange(uint _upc) {
     uint _price = items[_upc].productPrice;
     uint amountToReturn = msg.value - _price;
     msg.sender.transfer(amountToReturn);
+    require(msg.value >= _price,"Issue returning change.");
+    _;
   }
 
   // Define a modifier that checks if an item.state of a upc is Harvested
@@ -246,9 +241,10 @@ contract SupplyChain {
     // Call modifier to check if upc has passed previous supply chain stage
     forSale(_upc)
     // Call modifer to check if buyer has paid enough
-    paidEnough(items[_upc].productPrice)
+    paidEnough(_upc)
     // Call modifer to send any excess ether back to buyer
     returnChange(_upc)
+    // checkValue(_upc)
     {
 
     // Update the appropriate fields - ownerID, distributorID, itemState
@@ -311,9 +307,9 @@ contract SupplyChain {
     // Call modifier to check if upc has passed previous supply chain stage
     received(_upc)
     // Call modifer to check if buyer has paid enough
-    paidEnough(items[_upc].productPrice)
+    paidEnough(_upc)
     // Call modifer to send any excess ether back to buyer
-    checkValue(_upc)
+    returnChange(_upc)
 
     // Access Control List enforced by calling Smart Contract / DApp
     {
@@ -321,14 +317,14 @@ contract SupplyChain {
     items[_upc].ownerID = msg.sender;
     items[_upc].consumerID = msg.sender;
     items[_upc].itemState = State.Purchased;
+    uint revenueSplit = items[_upc].productPrice / 2;
 
 
     // // transfer the money to the distributor and retailer
     // // TODO: remember how to multiply times decimals.  Using integers here because
     // // I don't remember and this is an unrealistic markup and profit split.
-    items[_upc].retailerID.transfer(msg.value / 2);
-    items[_upc].distributorID.transfer(msg.value / 2);
-    // newAddress.transfer(msg.value);
+    items[_upc].retailerID.transfer(revenueSplit);
+    items[_upc].distributorID.transfer(revenueSplit);
 
     // Emit the appropriate event
     emit Purchased(_upc);
