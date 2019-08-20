@@ -41,7 +41,32 @@ contract('SupplyChain', function(accounts) {
     console.log("Farmer: accounts[1] ", accounts[1])
     console.log("Distributor: accounts[2] ", accounts[2])
     console.log("Retailer: accounts[3] ", accounts[3])
-    console.log("Consumer: accounts[4] ", accounts[9])
+    console.log("Consumer: accounts[4] ", accounts[4])
+
+    // TEST Zero --> Adding roles to the accounts
+    it("Testing smart contract function can add accounts to all roles", async() => {
+        const supplyChain = await SupplyChain.deployed()
+
+        // Retrieve the just now saved item from blockchain by calling function fetchItem()
+        supplyChain.addFarmer(accounts[1]);
+        supplyChain.addDistributor(accounts[2]);
+        supplyChain.addRetailer(accounts[3]);
+        supplyChain.addConsumer(accounts[9]);
+
+        // Retrieve role for each account
+        const isFarmer = await supplyChain.isFarmer(accounts[1]);
+        const isRetailer = await supplyChain.isDistributor(accounts[2]);
+        const isDistributor = await supplyChain.isRetailer(accounts[3]);
+        const isConsumer = await supplyChain.isConsumer(accounts[9]);
+
+        // Verify the result set
+        assert.equal(isFarmer, true, 'Error: Account one is not a farmer.')
+        assert.equal(isRetailer, true, 'Error: Account one is not a retailer.')
+        assert.equal(isDistributor, true, 'Error: Account one is not a distributor.')
+        assert.equal(isConsumer, true, 'Error: Account one is not a consumer.')
+
+    })
+
 
     // 1st Test
     it("Testing smart contract function harvestItem() that allows a farmer to harvest coffee", async() => {
@@ -57,7 +82,7 @@ contract('SupplyChain', function(accounts) {
             originFarmLatitude,
             originFarmLongitude,
             productNotes,
-            {from: accounts[1]});
+            {from: accounts[0]});
 
 
         // // Retrieve the just now saved item from blockchain by calling function fetchItem()
@@ -314,13 +339,11 @@ contract('SupplyChain', function(accounts) {
         // Declare and Initialize a variables
 
         const supplyChain = await SupplyChain.deployed();
-        const accountID = 4; // which actor are we simulating?
-
-        let consumerBalance =await web3.eth.getBalance(accounts[accountID-1])
+        const accountID = 0; // which actor are we simulating?
 
         // snapshots of actors account balance
-        let startDistributorBalance = await web3.eth.getBalance(accounts[accountID-2])
-        let startRetailerBalance = await web3.eth.getBalance(accounts[accountID-1])
+        let startDistributorBalance = await web3.eth.getBalance(distributorID)
+        let startRetailerBalance = await web3.eth.getBalance(retailerID)
 
         // declare and iniatialize other variables
         const markupFactor = 4; // distributor's markup multiplier.  used to calculate manufacturer suggested retail price (msrp or msrPrice)
@@ -336,8 +359,8 @@ contract('SupplyChain', function(accounts) {
 
 
         // snapshot of post call balances
-        let endDistributorBalance = await web3.eth.getBalance(accounts[accountID-2])
-        let endRetailerBalance = await web3.eth.getBalance(accounts[accountID-1])
+        let endDistributorBalance = await web3.eth.getBalance(distributorID)
+        let endRetailerBalance = await web3.eth.getBalance(retailerID)
 
         // calculate deltas and convert back to ether
         let distributorDelta = endDistributorBalance - startDistributorBalance;
@@ -364,7 +387,7 @@ contract('SupplyChain', function(accounts) {
         // Verify the result set
         assert.equal(resultBufferOne[0], sku, 'Error: Invalid item SKU')
         assert.equal(resultBufferOne[1], upc, 'Error: Invalid item UPC')
-        assert.equal(resultBufferOne[2], consumerID, 'Error: Missing or Invalid ownerID')
+        assert.equal(resultBufferOne[2], accounts[accountID], 'Error: Missing or Invalid ownerID')
         assert.equal(resultBufferOne[3], originFarmerID, 'Error: Missing or Invalid originFarmerID')
         assert.equal(resultBufferOne[4], originFarmName, 'Error: Missing or Invalid originFarmName')
         assert.equal(resultBufferOne[5], originFarmInformation, 'Error: Missing or Invalid originFarmInformation')
@@ -374,7 +397,7 @@ contract('SupplyChain', function(accounts) {
         assert.equal(resultBufferTwo[4], msrPrice, `Error: Invalid item price`)
         assert.equal(resultBufferTwo[6], distributorID, `Error: Invalid distributorID`)
         assert.equal(resultBufferTwo[7], retailerID, `Error: Invalid retailerID`)
-        assert.equal(resultBufferTwo[8], consumerID, `Error: Invalid consumerID`)
+        assert.equal(resultBufferTwo[8], accounts[accountID], `Error: Invalid consumerID`)
         assert.equal(expectedEvent,expectedStateName,'Error: Invalid event emitted')
         assert.equal(distributorDelta,expectedRevenue,'Error: Distributor got the wrong amont of Wei')
         assert.equal(retailerDelta,expectedRevenue,'Error: Retailer got the wrong amont of Wei')
@@ -385,16 +408,15 @@ contract('SupplyChain', function(accounts) {
     it("Testing smart contract function fetchItemBufferOne() that allows anyone to fetch item details from blockchain", async() => {
         // Declare and Initialize a variables
         const supplyChain = await SupplyChain.deployed();
-        const accountID = 9; // which actor are we simulating?
+        const accountID = 0; // which actor are we simulating?
 
         // Retrieve the just now saved item from blockchain by calling function fetchItem()
         const resultBufferOne = await supplyChain.fetchItemBufferOne.call(upc, {from: accounts[accountID]})
-        const resultBufferTwo = await supplyChain.fetchItemBufferTwo.call(upc, {from: accounts[accountID]})
 
         // Verify the result set
         assert.equal(resultBufferOne[0], sku, 'Error: Invalid item SKU')
         assert.equal(resultBufferOne[1], upc, 'Error: Invalid item UPC')
-        assert.equal(resultBufferOne[2], consumerID, 'Error: Missing or Invalid ownerID')
+        assert.equal(resultBufferOne[2], accounts[accountID], 'Error: Missing or Invalid ownerID')
         assert.equal(resultBufferOne[3], originFarmerID, 'Error: Missing or Invalid originFarmerID')
         assert.equal(resultBufferOne[4], originFarmName, 'Error: Missing or Invalid originFarmName')
         assert.equal(resultBufferOne[5], originFarmInformation, 'Error: Missing or Invalid originFarmInformation')
@@ -408,12 +430,11 @@ contract('SupplyChain', function(accounts) {
 
         const supplyChain = await SupplyChain.deployed();
         const expectedState = 7; // which state are we expecting after this test executes
-        const accountID = 9; // which actor are we simulating?
+        const accountID = 0; // which actor are we simulating?
         const markupFactor = 4; // distributor's markup multiplier.  used to calculate manufacturer suggested retail price (msrp or msrPrice)
         const msrPrice = productPrice * markupFactor; // manufacturer suggested retail price (the price that the retailer will sell at).
 
         // Retrieve the just now saved item from blockchain by calling function fetchItem()
-        const resultBufferOne = await supplyChain.fetchItemBufferOne.call(upc, {from: accounts[accountID]})
         const resultBufferTwo = await supplyChain.fetchItemBufferTwo.call(upc, {from: accounts[accountID]})
 
         // Verify the result set
@@ -425,7 +446,7 @@ contract('SupplyChain', function(accounts) {
         assert.equal(resultBufferTwo[5], expectedState, `Error: Invalid item State`)
         assert.equal(resultBufferTwo[6], distributorID, `Error: Invalid distributorID`)
         assert.equal(resultBufferTwo[7], retailerID, `Error: Invalid retailerID`)
-        assert.equal(resultBufferTwo[8], consumerID, `Error: Invalid consumerID`)
+        assert.equal(resultBufferTwo[8], accounts[accountID], `Error: Invalid consumerID`)
     })
 
 });
