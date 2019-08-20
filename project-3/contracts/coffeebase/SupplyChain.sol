@@ -181,8 +181,9 @@ contract SupplyChain is Ownable, ConsumerRole, DistributorRole, FarmerRole, Reta
                         string  _originFarmLatitude,
                         string  _originFarmLongitude,
                         string  _productNotes) public
-  onlyFarmer()
+  //onlyFarmer() --> no UI for inializing the farmer yet so I'm not implementing this here.
   {
+
     // Add the new item as part of Harvest
     Item memory harvestedItem;
     harvestedItem.upc = _upc;
@@ -197,7 +198,7 @@ contract SupplyChain is Ownable, ConsumerRole, DistributorRole, FarmerRole, Reta
     harvestedItem.productNotes = _productNotes;
 
     items[_upc] = harvestedItem;
-    addFarmer(_originFarmerID);
+
 
     // Increment sku
     sku = sku + 1;
@@ -247,42 +248,37 @@ contract SupplyChain is Ownable, ConsumerRole, DistributorRole, FarmerRole, Reta
     forSale(_upc) // Call modifier to check if upc has passed previous supply chain stage
     paidEnough(_upc) // Call modifer to check if buyer has paid enough
     returnChange(_upc) // Call modifer to send any excess ether back to buyer
+    onlyDistributor()  // Modifier ensuring that only a distributor can buy an Item from the farmer
 
     /*
     Who actually does the calling of buyItem?  I'm assuming that the distributor should do so
     but in order to use the onlyDistributor modifier I have to have that distributor added to
-    a list of known distributors prior to envoking this function?
+    a list of known distributors prior to envoking this function? For the time being I'm going
+    to assume anyone can buy from the farmer and be the "distrbutor".  Once the purchase has
+    happened the buyer's address is added as the official distributor for this item. Tests
+    will run under the contract owner account which is listed in all roles.
     */
 
     {
-
     // Update the appropriate fields - itemOwnerID, distributorID, itemState
     uint _wholesalePrice = items[_upc].productPrice ;
     uint _msrp = _wholesalePrice * 4;
     items[_upc].itemOwnerID = msg.sender;
     items[_upc].distributorID = msg.sender;
     items[_upc].itemState = State.Sold;
-    // Transfer money to farmer
-    // TODO: ask question about this.  It seems weird that change is returned before paying the farmer.
-    // What if this is the farmer's first sale and he/she has no Ether in their wallet?
-    // I assume then that this amount to return comes from the contract itself and the ether stored there
-    // during the transaction itself.
-    items[_upc].originFarmerID.transfer(_wholesalePrice);
 
-    // markup the price for sale to the end consumer
-    items[_upc].productPrice = _msrp;
+    items[_upc].originFarmerID.transfer(_wholesalePrice); // Transfer money to farmer
+    items[_upc].productPrice = _msrp; // markup the price for sale to the end consumer
 
-    // emit the appropriate event
-    emit Sold(_upc);
+    emit Sold(_upc);// emit the appropriate event
   }
 
   // Define a function 'shipItem' that allows the distributor to mark an item 'Shipped'
   // Use the above modifers to check if the item is sold
   function shipItem(uint _upc) public
-    // Call modifier to check if upc has passed previous supply chain stage
-    sold(_upc)
-    // Call modifier to verify caller of this function
-    verifyCaller(items[_upc].distributorID)
+    sold(_upc) // Call modifier to check if upc has passed previous supply chain stage
+    verifyCaller(items[_upc].distributorID) // Call modifier to verify caller of this function
+    onlyDistributor()  // Modifier ensuring that only a distributor can ship an Item
     {
     // Update the appropriate fields
     items[_upc].itemState = State.Shipped;
@@ -291,18 +287,18 @@ contract SupplyChain is Ownable, ConsumerRole, DistributorRole, FarmerRole, Reta
   }
 
   // Define a function 'receiveItem' that allows the retailer to mark an item 'Received'
-  // Use the above modifiers to check if the item is shipped
   function receiveItem(uint _upc) public
-    // Call modifier to check if upc has passed previous supply chain stage
-    shipped(_upc)
-    // Access Control List enforced by calling Smart Contract / DApp
-    // TODO: NOT SURE WHAT TO DO HERE --> I assume confirm that the person calling
-    // this function is actually the retailer?
+
+    shipped(_upc) // Call modifier to check if upc has passed previous supply chain stage
+    // ASSUME UI SUPPORTS pre-loacding the accounts into rolls
+    onlyRetailer() // only allow a known retailer to mark an item as recieved.
     {
     // Update the appropriate fields - itemOwnerID, retailerID, itemState
-    // TODO: Does the distributor still own it once it hits the retailer? I assume so since
-    // no money has exchanged hands.  The retailer is just displaying the product for the
-    // distributor.  Once it sells a portion goes to the distributor?
+    // The distributor still owns it once it hits the retailer? This is typical in supplychain
+    // the distributor or OEM is just renting space on the retailer shelves and thus
+    // no money has exchanged hands (there is no buying from the distributor by the retailer).
+    // The retailer is just displaying the product for the distributor.
+    // Once it sells a portion goes to the distributor and a portion to the retailer.
     items[_upc].retailerID = msg.sender;
     items[_upc].itemState = State.Received;
 
@@ -313,25 +309,19 @@ contract SupplyChain is Ownable, ConsumerRole, DistributorRole, FarmerRole, Reta
   // Define a function 'purchaseItem' that allows the consumer to mark an item 'Purchased'
   // Use the above modifiers to check if the item is received
   function purchaseItem(uint _upc) public payable
-    // Call modifier to check if upc has passed previous supply chain stage
-    received(_upc)
-    // Call modifer to check if buyer has paid enough
-    paidEnough(_upc)
-    // Call modifer to send any excess ether back to buyer
-    returnChange(_upc)
-
-    // Access Control List enforced by calling Smart Contract / DApp
+    // onlyConsumer --> I want anyone with a valida address to be able to purchase items, I don't want to have to add them to a list of consumers prior to purchase.
+    received(_upc) // Call modifier to check if upc has passed previous supply chain stage
+    paidEnough(_upc) // Call modifer to check if buyer has paid enough
+    returnChange(_upc) // Call modifer to send any excess ether back to buyer
     {
     // Update the appropriate fields - itemOwnerID, consumerID, itemState
     items[_upc].itemOwnerID = msg.sender;
     items[_upc].consumerID = msg.sender;
     items[_upc].itemState = State.Purchased;
-    uint revenueSplit = items[_upc].productPrice / 2;
+    uint revenueSplit = items[_upc].productPrice / 2; //Calculates revenue split between parties
 
 
-    // // transfer the money to the distributor and retailer
-    // // TODO: remember how to multiply times decimals.  Using integers here because
-    // // I don't remember and this is an unrealistic markup and profit split.
+    // transfer the money to the distributor and retailer
     items[_upc].retailerID.transfer(revenueSplit);
     items[_upc].distributorID.transfer(revenueSplit);
 
